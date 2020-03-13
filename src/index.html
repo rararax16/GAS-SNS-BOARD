@@ -1,0 +1,48 @@
+<html>
+
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+  <?!= HtmlService.createHtmlOutputFromFile('vuetify.min.css-1.5.14').getContent(); ?>
+  <title>SNSBoard</title>
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <vue-toollist></vue-toollist>
+      <vue-board></vue-board>
+    </v-app>
+  </div>
+</body>
+
+</html>
+
+<?!= HtmlService.createHtmlOutputFromFile('vue.js-2.6.10').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('vuetify.js-1.5.14').getContent(); ?>
+
+<?!= HtmlService.createHtmlOutputFromFile('vue_toolList').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('vue_board').getContent(); ?>
+
+
+<script>
+  const app = new Vue
+    ({
+      el: "#app"
+      , data() {
+        return {
+        }
+      }
+      , methods:
+      {
+      }
+      , mounted() {
+      }
+      , components:
+      {
+        'vue-toollist': vue_toolList
+        , 'vue-board': vue_board
+      }
+    })
+</script>

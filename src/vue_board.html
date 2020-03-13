@@ -1,0 +1,832 @@
+<script>
+
+  const vue_board =
+  {
+    template:
+      `
+    <div>
+        <v-container grid-list-md>
+            <v-layout row wrap>
+                <v-flex xs8>
+                    <v-text-field
+                        solo
+                        label="Search"
+                        v-model = "search_word"
+                        @keydown.enter="enter_search_start"
+                    ></v-text-field>
+                </v-flex>
+                <v-flex xs4>
+                    <v-btn
+                        :loading="search_loading"
+                        :disabled="reload_btn"
+                        color="success"
+                        @click="search_btn_click"
+                    >
+                        <v-icon dark>search</v-icon>
+                    </v-btn>
+                </v-flex>
+            </v-layout>
+            <v-layout row wrap>
+                <v-flex xs6>
+                    <v-btn
+                        @click="new_card_open"
+                    >
+                        新規投稿
+                        <v-icon dark>note_add</v-icon>
+                    </v-btn>
+                </v-flex>
+                <v-flex xs6 class="text-xs-right">
+                    <v-btn
+                        flat color="info"
+                        :disabled= "reload_btn"
+                        @click = "get_search_sns"
+                    >
+                        <v-icon>replay</v-icon>
+                    </v-btn>
+                </v-flex>
+            </v-layout>
+            <v-layout row wrap>
+                <v-flex xs12 v-if="!progress_loading">
+                    <v-list two-line>
+                        <template v-for="(sns_item, index) in sns_items">
+                            <v-list-tile
+                            :id="sns_item.card_no_title1"
+                            avatar
+                            ripple
+                            @click="goto_detail"
+                            >
+                                <v-list-tile-content  :id="sns_item.card_no_title2">
+                                    <v-list-tile-title :id="sns_item.card_no_title3">{{ sns_item.title | list_viewLimit }}</v-list-tile-title>
+                                    <v-list-tile-sub-title class="text--primary" :id="sns_item.card_no_title4">{{ sns_item.text | list_viewLimit }}</v-list-tile-sub-title>
+                                    <v-list-tile-sub-title :id="sns_item.card_no_title5">{{ sns_item.postDate }} &nbsp; {{ sns_item.userName | list_viewLimit }} </v-list-tile-sub-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                            <v-divider
+
+                            ></v-divider>
+                        </template>
+                    </v-list>
+                </v-flex>
+                <v-flex xs12 class="text-xs-center" v-if="progress_loading">
+                    <v-progress-linear :indeterminate="progress_loading"></v-progress-linear>
+                </v-flex>
+
+                <v-flex xs12 class="text-xs-center" v-if="nextRow != 0">
+                    <v-btn flat
+                        small
+                        color="primary"
+                        @click = "get_sns"
+                        :loading="more_loading"
+                    >
+                        さらに読み込む
+                    </v-btn>
+                </v-flex>
+            </v-layout>
+        </v-container>
+
+
+
+        <!-- 投稿内容の詳細表示ダイアログ -->
+        <v-layout row justify-center>
+            <v-dialog
+                v-model="card_detail"
+                width="500"
+                persistent
+                fullscreen
+                scrollable
+            >
+                <v-card>
+                    <v-toolbar dark color="indigo">
+                        <v-btn icon dark @click="card_detail =false">
+                            <v-icon>close</v-icon>
+                        </v-btn>
+                        <v-card-title>{{select_item.title}}</v-card-title>
+                        <v-spacer></v-spacer>
+                    </v-toolbar>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                        <v-layout row wrap>
+                            <v-flex xs6>
+                                <v-subheader>{{select_item.userName}}</v-subheader>
+                            </v-flex>
+                            <v-flex xs6 class="text-xs-right" v-if="select_item.userAccount == user_account">
+                                <v-btn flat icon @click="sns_delete">
+                                    <v-icon
+                                        color="error"
+                                    >
+                                        delete_forever
+                                    </v-icon>
+                                </v-btn>
+                            </v-flex>
+                        </v-layout>
+                        <v-textarea
+                            :label= select_item.postDate
+                            auto-grow
+                            outline
+                            disabled
+                            :value= select_item.text
+                        ></v-textarea>
+                        <v-layout row wrap class="text-xs-center">
+                            <v-flex xs3>
+                                <v-btn flat icon @click="reply_dialog_open">
+                                    <v-icon
+                                        color="info"
+                                    >
+                                        reply
+                                    </v-icon>
+                                </v-btn>
+                            </v-flex>
+                            <v-flex xs3>
+                                <v-btn flat icon @click="card_read = true">
+                                    <v-icon
+                                        color="info"
+                                    >
+                                        remove_red_eye
+                                    </v-icon>
+                                </v-btn>
+                            </v-flex>
+                            <v-flex xs3 v-if=" select_item.linkURL !=='' ">
+                                <v-btn　flat icon :href="select_item.linkURL" target=”_blank” v-if="select_item.linkURL !='' ">
+                                    <v-icon color="info">
+                                        link
+                                    </v-icon>
+
+                                </v-btn>
+                            </v-flex>
+                            <v-flex xs3 v-if=" select_item.linkURL ==='' ">
+                                <v-btn　flat disabled>
+                                    <v-icon >
+                                        link
+                                    </v-icon>
+
+                                </v-btn>
+                            </v-flex>
+                            <v-flex xs3 v-if="select_item.fileURL!=='' ">
+                                <v-btn　flat icon :href="select_item.fileURL" target=”_blank” v-if="select_item.fileURL !='' ">
+                                    <v-icon color="info">
+                                        attach_file
+                                    </v-icon>
+
+                                </v-btn>
+                            </v-flex>
+                            <v-flex xs3 v-if="select_item.fileURL==='' ">
+                                <v-btn　color="info" flat disabled>
+                                    <v-icon>
+                                        attach_file
+                                    </v-icon>
+
+                                </v-btn>
+                            </v-flex>
+                        </v-layout>
+                        <v-divider></v-divider>
+                        <template v-for="reply_item in reply_items">
+                            <v-layout row wrap>
+                                <v-flex xs6>
+                                    <v-subheader>{{reply_item.userName}}</v-subheader>
+                                </v-flex>
+                                <v-flex xs6  class="text-xs-right">
+                                    <v-btn flat icon
+                                        @click=""
+                                        v-if="reply_item.userAccount == user_account"
+                                    >
+                                        <v-icon
+                                            color="error"
+                                            :id="reply_item.card_no"
+                                            @click="sns_replyDelete"
+                                            :disable="reply_loading_delete"
+                                        >
+                                            delete_forever
+                                        </v-icon>
+                                    </v-btn>
+                                </v-flex>
+                            </v-layout>
+                            <v-textarea
+                                :label= reply_item.postDate
+                                auto-grow
+                                disabled
+                                :value= reply_item.text
+                            ></v-textarea>
+                        </template>
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+        </v-layout>
+
+        <!-- リプライダイアログ -->
+        <v-layout row justify-center>
+            <v-dialog
+                v-model="card_reply"
+                width="500"
+                persistent
+                scrollable
+            >
+            <v-card>
+                <v-toolbar dark color="indigo">
+                    <v-btn icon dark @click="card_reply = false" :disable="reply_loading">
+                        <v-icon>close</v-icon>
+                    </v-btn>
+                    <v-card-title>返信</v-card-title>
+                    <v-spacer></v-spacer>
+                </v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>
+                    <v-textarea
+                        label="本文"
+                        v-model="reply_text"
+                        prepend-icon="edit"
+                        hint="必要に応じて改行が可能です。"
+                    ></v-textarea>
+                    <!--<v-text-field
+                        v-model="reply_link"
+                        label="URL"
+                        prepend-icon="link"
+                    ></v-text-field>
+                    -->
+                    <v-checkbox
+                    v-model="reply_checkbox"
+                    label="相手にメール通知する"
+                    ></v-checkbox>
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                    color="primary"
+                    flat
+                    @click="reply_sns"
+                    :loading = "reply_loading"
+                >
+                    投稿
+                </v-btn>
+                </v-card-actions>
+            </v-card>
+            </v-dialog>
+        </v-layout>
+
+        <!-- 既読情報ダイアログ -->
+        <v-layout row justify-center>
+            <v-dialog
+                v-model="card_read"
+                width="500"
+                persistent
+                scrollable
+            >
+            <v-card>
+                <v-toolbar dark color="green darken-1">
+                    <v-btn icon dark @click="card_read = false" :disable="reply_loading">
+                        <v-icon>close</v-icon>
+                    </v-btn>
+                    <v-card-title>既読一覧</v-card-title>
+                    <v-spacer></v-spacer>
+                </v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>
+                    <div v-for="list in read_list">
+                        <p>{{list}}</p>
+                    </div>
+                </v-card-text>
+                <v-divider></v-divider>
+            </v-card>
+            </v-dialog>
+        </v-layout>
+
+        <!-- 新規投稿ダイアログ -->
+        <v-layout row justify-center>
+            <v-dialog
+                v-model="card_newadd"
+                width="500"
+                persistent
+                scrollable
+            >
+            <v-card>
+                <v-toolbar dark color="pink">
+                    <v-btn icon dark @click="card_newadd =false" :disable="new_loading">
+                        <v-icon>close</v-icon>
+                    </v-btn>
+                    <v-card-title>新規投稿</v-card-title>
+                    <v-spacer></v-spacer>
+                </v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>
+
+                    <!-- -->
+                    <form ref="new_sns_form">
+                        <v-text-field
+                            v-model="new_title"
+                            name="new_title"
+                            label="タイトル"
+                            prepend-icon="edit"
+                        ></v-text-field>
+
+                        <v-textarea
+                            label="本文"
+                            v-model="new_text"
+                            name="new_text"
+                            hint="必要に応じて改行が可能です。"
+                            prepend-icon="edit"
+                        ></v-textarea>
+                        <v-text-field
+                            v-model="new_link"
+                            name="new_link"
+                            label="URL"
+                            prepend-icon="link"
+                        ></v-text-field>
+
+                        <!-- 添付ファイル -->
+                        <v-flex xs12>
+                            <v-text-field label="添付ファイル　50Mbまで" @click='new_pickFile' v-model='new_fileName' prepend-icon='attach_file'></v-text-field>
+                        </v-flex>
+                        <input
+                        name = "new_file"
+                        id = "new_file"
+                        type="file"
+                        style="display: none"
+                        ref="new_image"
+                        @change="on_newFilePicked"
+                        >
+                        <input
+                            name="new_access_key"
+                            type="text"
+                            v-model="access_key"
+                            v-show="false"
+                        >
+                    </form>
+                  <!-- -->
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                    color="primary"
+                    flat
+                    @click="post_sns"
+                    :loading = "new_loading"
+                >
+                    投稿
+                </v-btn>
+                </v-card-actions>
+            </v-card>
+            </v-dialog>
+        </v-layout>
+
+        <v-snackbar
+            v-model="snackbar"
+            :timeout="timeout"
+        >
+            {{snack_txt}}
+            <v-btn
+            color="pink"
+            flat
+            @click="snackbar = false"
+            >
+            Close
+            </v-btn>
+        </v-snackbar>
+
+        <a ref="reload_btn" style="display: none" :href="reload_url"></a>
+    </div>
+    `
+    , data() {
+      return {
+        user_account: ""
+
+        , access_key: ""
+
+        , search_word: ""         //検索キーに入力した内容
+        , search_word_after: ""  //検索キーに入力した項目を別で保持（項目から消された場合に、さらに表示を押された場合の対策）
+        , search_loading: false   //検索ボタンの検索中のアニメーション区分
+
+        , reload_btn: false
+        , more_loading: false    //さらに読み込み時　のアニメーション区分
+        , progress_loading: false //一覧読み込み時　のアニメーション区分
+
+        , card_newadd: false    //新規投稿を入力するダイアログの表示区分
+        , new_title: ""          //新規登録時のタイトル
+        , new_text: ""          //新規登録時の本文
+        , new_link: ""
+        , new_fileName: ""
+        , new_loading: false    //登録時のアニメーション区分
+
+        , card_reply: false
+        , reply_text: ""
+        , reply_link: ""
+        , reply_checkbox: true
+        , reply_loading: false
+
+
+        , card_detail: false     //詳細表示するダイアログの表示区分
+        , nextRow: 0           //さらに読み込む　時の開始取得行
+        , sns_items: []         //投稿一覧を保持する配列
+        , select_item: []       //詳細に表示する配列
+        , reply_items: []       //返信一覧を表示する配列
+        , reply_loading_delete: false
+
+        , card_read: false
+        , read_list: []          //既読した人の一覧を表示する配列
+
+        , snack_txt: ""
+        , snackbar: false
+        , timeout: 3000
+
+        , reload_url: ""
+      }
+    }
+    , methods:
+    {
+      /**************************************************
+      * 一覧から投稿を選択時に、選択した詳細を表示する
+      * @Param1 : DOM全般
+      * @return : 配列の添字
+      ***************************************************/
+      get_listCard_info(event) {
+        //クリックしたDOMのIDを取得し、IDのみ抜き取る
+        const click_id = event.target.id;
+        const card_no = Number(
+          click_id
+            .replace("_title1", "")
+            .replace("_title2", "")
+            .replace("_title3", "")
+            .replace("_title4", "")
+            .replace("_title5", "")
+        );
+
+        //IDをキーに配列のどこにあるかを検索
+        let result_no;
+        for (i in this.sns_items) {
+          if (this.sns_items[i].card_no == card_no) {
+            result_no = i
+          }
+        }
+
+        //一致した添字を戻値で返す
+        return result_no
+      }
+      /**************************************************
+       * 掲示板投稿ダイアログを表示
+       ***************************************************/
+      , new_card_open() {
+        //投稿内容のタイトルと本文を初期化
+        this.new_title = "";
+        this.new_text = "";
+        this.new_link = ""
+        this.new_fileName = ""
+        this.new_imageFile = ''
+        document.getElementById("new_file").value = "";
+
+        //ダイアログを表示
+        this.card_newadd = true;
+
+      }
+      /**************************************************
+       *検索ボタンクリック時
+       *************************************************/
+      , search_btn_click() {
+        //検索ボタン内のアニメーションを表示
+        this.search_loading = true;
+
+        //検索処理を実行
+        this.get_search_sns();
+      }
+      /**************************************************
+       * 検索ワード内でエンター押下時検索処理を実行
+       ***************************************************/
+      , enter_search_start() {
+        if (event.keyCode == 13) {
+          this.search_btn_click();
+        }
+      }
+      /**************************************************
+       * 検索ワードワードをキーに投稿内容を検索
+       ***************************************************/
+      , get_search_sns() {
+        //一覧内容、検索開始行をクリア
+        this.sns_items = [];
+        this.nextRow = 0
+
+        /*+++++++++++++++++++++++++++++++++++++
+         + gasのスプレッドシートから検索ワードを含む投稿内容を取得
+         + @Param1 : [0] 取得した内容の初めから取得
+         + @Param2 : 検索ワード
+         + @Callback : open_get_sns
+         ++++++++++++++++++++++++++++++++++++++*/
+        google.script.run
+          .withSuccessHandler(this.open_get_sns)
+          .gas_get_sns(0, this.search_word);
+
+        //一覧画面のアニメーションを表示
+        this.progress_loading = true;
+
+        //再読み込みボタンのクリックを不可にする
+        this.reload_btn = true;
+
+      }
+      /**************************************************
+       * 掲示板の詳細内容のダイアログを表示
+       * @Param1 : DOM全般
+       ***************************************************/
+      , goto_detail(event) {
+        //詳細に表示する返信一覧と既読一覧を初期化
+        this.reply_items = [];
+        this.read_list = [];
+
+        //[event]をキーに配列の添字を取得
+        const select_item_no = this.get_listCard_info(event);
+
+        //取得した添字をキーに詳細ダイアログに表示する配列に格納
+        this.select_item = this.sns_items[select_item_no];
+        //ダイアログを表示
+        this.card_detail = true;
+
+        /*+++++++++++++++++++++++++++++++++++++++
+         + 投稿IDをキーに返信一覧を取得と既読更新処理
+         + @Param1 : 投稿ID
+         + @Callback : open_get_reply
+         ++++++++++++++++++++++++++++++++++++++++*/
+        google.script.run
+          .withSuccessHandler(this.open_get_reply)
+          .gas_getReply_readUpdata(this.select_item.card_no);
+      }
+      /**************************************************
+       * 投稿に対しての返信を一覧で表示と、既読状況の表示
+       * @Param1 : [array]返信一覧
+       ***************************************************/
+      , open_get_reply(json) {
+        this.reply_items = json.out_list_array;
+        this.read_list = json.out_read_list;
+      }
+      /**************************************************
+       * 読み込む　押下時
+       * 投稿内容を一覧で取得する
+       ***************************************************/
+      , get_sns() {
+        /*+++++++++++++++++++++++++++++++++++++
+         + gasのスプレッドシートから検索ワードを含む投稿内容を取得
+         + @Param1 : 取得開始行
+         + @Param2 : 検索ワード(検索キーに入力した内容を保持している変数)
+         + @Callback : open_get_sns
+         ++++++++++++++++++++++++++++++++++++++*/
+        google.script.run
+          .withSuccessHandler(this.open_get_sns)
+          .gas_get_sns(this.nextRow, this.search_word_after);
+
+        //検索中アニメーションを開始
+        this.more_loading = true;
+
+      }
+      /**************************************************
+       * 投稿一覧を取得した結果を表示する処理
+       * @Param1 : [nextRow] 次回検索時、取得行
+       *             [out_list_array] 投稿一覧
+       ***************************************************/
+      , open_get_sns(json) {
+        //開始行、投稿一覧を取得
+        this.nextRow = json.nextRow;
+        this.search_word_after = this.search_word;
+
+        //画面に投稿内容がある場合、既存の配列データの後ろに追加する。
+        if (this.sns_items.length > 0) {
+          this.sns_items = this.sns_items.concat(json.out_list_array);
+        }
+        else {
+          //すでにあるが、取得した内容が1件以上ある場合、新規に追加する。
+          if (json.out_list_array.length > 0) {
+            this.sns_items = json.out_list_array;
+          }
+          else {
+            //取得した内容が0件の場合、表示する配列を初期化
+            this.sns_items = [];
+          }
+        }
+
+        //検索中アニメーションを停止
+        this.search_loading = false;
+        this.more_loading = false;
+        this.progress_loading = false;
+
+        //再読み込みボタンのクリックを可能にする
+        this.reload_btn = false;
+
+      }
+      , input_text_chk(text) {
+        return text.replace(/　/g, "").replace(/ /g, "").replace(/\n/g, "");
+      }
+      , on_newFilePicked(e) {
+        const files = e.target.files
+        if (files[0] != undefined) {
+          const fileList = document.getElementById("new_file").files;
+          let list = "";
+          for (let i = 0; i < fileList.length; i++) {
+            list += fileList[i].size;
+          }
+
+          if (Number(list) >= 50000000) {
+            const sizuMb = Math.ceil(list / 1000000);
+            alert(`50Mbを超えるファイルのアップロードはできません。\nファイルのサイズ：${sizuMb}Mb`);
+            this.new_imageFile = ""
+            this.new_fileName = ""
+            document.getElementById("new_file").value = "";
+            return;
+          }
+
+          this.new_fileName = files[0].name
+
+          if (this.new_fileName.lastIndexOf('.') <= 0) {
+            return
+          }
+          const fr = new FileReader()
+          fr.readAsDataURL(files[0])
+          fr.addEventListener('load', () => {
+            //this.imageUrl = fr.result
+            this.new_imageFile = files[0] // this is an image file that can be sent to server...
+          })
+        }
+        else {
+          this.new_imageFile = ''
+          this.new_fileName = ""
+        }
+      }
+      , new_pickFile() {
+        this.$refs.new_image.click()
+      }
+      /**************************************************
+       * 掲示板に投稿
+       ***************************************************/
+      , post_sns() {
+        let input_text = this.new_title + this.new_text;
+        input_text = this.input_text_chk(input_text);
+        if (input_text === "") {
+          return;
+        }
+
+        this.new_loading = true;
+
+        /*+++++++++++++++++++++++++++++++++++++
+         + gasのスプレッドシートにsns投稿
+         + @Param1 : [json] title : タイトル
+         +                   text : 本文
+         +                    mother_no : 空白
+         + @Callback : open_get_sns
+         ++++++++++++++++++++++++++++++++++++++*/
+
+        google.script.run
+          .withSuccessHandler(this.open_post_sns)
+          .gas_post_newSns(this.$refs.new_sns_form);
+      }
+      , open_post_sns(json) {
+        this.new_loading = false;
+        this.card_newadd = false;
+
+        this.err_flg_msg(json.err_no, "投稿しました。");
+
+        switch (json.screen_no) {
+          case 0:
+            this.get_search_sns();
+            this.progress_loading = true;
+            break;
+
+          case 1:
+            google.script.run
+              .withSuccessHandler(this.open_get_reply)
+              .gas_getReply_readUpdata(this.select_item.card_no);
+            this.card_reply = false;
+            this.reply_loading = false;
+            break;
+        }
+
+      }
+      , reply_sns() {
+        let input_text = this.input_text_chk(this.reply_text);
+        if (input_text === "") {
+          return;
+        }
+        const set_json = {
+          "text": this.reply_text
+          , "link": this.reply_link
+          , "mother_no": this.select_item.card_no
+          , "mother_title": this.select_item.title
+          , "mail_flg": this.reply_checkbox
+          , "to_mailAddress": this.select_item.userAccount
+          , "access_key": this.access_key
+        }
+        this.reply_loading = true;
+
+        /*+++++++++++++++++++++++++++++++++++++
+         + gasのスプレッドシートにsns投稿
+         + @Param1 : [json] title : タイトル
+         +                   text : 本文
+         +                    mother_no : 返信元snsNo.
+         + @Callback : open_get_sns
+         ++++++++++++++++++++++++++++++++++++++*/
+        google.script.run
+          .withSuccessHandler(this.open_post_sns)
+          .gas_post_replySns(set_json, 1);
+      }
+      , reply_dialog_open() {
+        this.reply_text = "";
+        this.card_reply = true;
+      }
+      , sns_delete() {
+        if (window.confirm('投稿内容を削除しますか？')) {
+          const json = {
+            "card_no": this.select_item.card_no
+            , "access_key": this.access_key
+            , "screen_no": 0
+          }
+          google.script.run
+            .withSuccessHandler(this.open_sns_delete)
+            .gas_sns_delete(json)
+        }
+      }
+      , sns_replyDelete(event) {
+        if (window.confirm('投稿内容を削除しますか？')) {
+          this.reply_loading_delete = true;
+          const card_no = event.target.id;
+          const json = {
+            "card_no": card_no
+            , "access_key": this.access_key
+            , "screen_no": 1
+          }
+          google.script.run
+            .withSuccessHandler(this.open_sns_delete)
+            .gas_sns_delete(json)
+        }
+      }
+      , open_sns_delete(json) {
+        this.err_flg_msg(json.err_flg, "削除しました。");
+
+        switch (json.screen_no) {
+          case 0:
+            this.card_detail = false;
+            this.snackbar = true;
+            break;
+          case 1:
+            google.script.run
+              .withSuccessHandler(this.open_get_reply)
+              .gas_getReply_readUpdata(this.select_item.card_no);
+            this.card_reply = false;
+            this.reply_loading = false;
+            this.reply_loading_delete = false;
+            break;
+        }
+      }
+      , open_get_firstInfo(json) {
+        this.user_account = json.user_id;
+        this.reload_url = json.reload_url;
+        this.access_key = json.access_key;
+      }
+      , err_flg_msg(err_no, ok_msg) {
+        switch (err_no) {
+          case 0:
+            this.snack_txt = ok_msg
+            this.snackbar = true;
+            break;
+
+          case 1:
+            alert("バッチ更新処理中であるため、投稿できません。\n時間をおいて再度アクセスしてください。");
+            this.$refs.reload_btn.click();
+            break
+
+          case 2:
+            alert("セッションが切れているため、再読み込みを行なって再度投稿してください。");
+            //this.$refs.reload_btn.click() ;
+            break
+
+          case 3:
+            this.snack_txt = "アカウントが異なるため、削除できません。";
+            this.get_search_sns();
+            break
+
+          default:
+            alert("その他のエラーが発生しました。");
+        }
+      }
+    }
+    , filters:
+    {
+      //表示するデバイスによって、一覧の表示文字を制限する
+      list_viewLimit(value) {
+        const ua = navigator.userAgent;
+        if (ua.indexOf('iPhone') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0) {
+          return value.slice(0, 22)
+        }
+        return value
+      }
+    }
+    , created() {
+      this.get_search_sns();
+      this.progress_loading = true;
+
+      google.script.run
+        .withSuccessHandler(this.open_get_firstInfo)
+        .gas_get_firstInfo()
+    }
+  }
+
+</script>
+
+<style>
+  :disabled {
+    -webkit-text-fill-color: black;
+    opacity: 1;
+  }
+</style>
