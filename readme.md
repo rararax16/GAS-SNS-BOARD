@@ -33,7 +33,7 @@
 セル内：
 |   | A                     | B                                 |
 |:-:|:----------------------|:----------------------------------|
-| 1 |UPDATE_FLG             | [UPDATE_FLG]のシートID            |
+| 1 |UPDATE_FLG             | [UPDATE_FLG]の区分,[0]を指定      |
 | 2 |SNS_ACCESS_KEY         | [SNS_ACCESS_KEY]のシートID        |
 | 3 |SNS_BORAD_DATA         | [SNS_BORAD_DATA]のシートID        |
 | 4 |SNS_BORAD_DATAHISTORY  | [SNS_BORAD_DATAHISTORY]のシートID |
