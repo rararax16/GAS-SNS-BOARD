@@ -34,7 +34,7 @@
 |   | A                     | B                                 |
 |:-:|:----------------------|:----------------------------------|
 | 1 |UPDATE_FLG             | [UPDATE_FLG]の区分,[0]を指定      |
-| 2 |SNS_ACCESS_KEY         | [SNS_ACCESS_KEY]のシートID        |
+| 2 |SNS_ACCESS_KEY         | SNS_BORAD_DATAに書き込むキー（初期値は123456）        |
 | 3 |SNS_BORAD_DATA         | [SNS_BORAD_DATA]のシートID        |
 | 4 |SNS_BORAD_DATAHISTORY  | [SNS_BORAD_DATAHISTORY]のシートID |
 | 5 |SNS_FILE               | [SNS_FILE]のフォルダID            |
