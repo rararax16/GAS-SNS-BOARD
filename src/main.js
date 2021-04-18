@@ -451,7 +451,7 @@ function updata_bat_flg() {
 function access_key_chk(select_access_key) {
   var result = false;
 
-  if (access_key === select_access_key) {
+  if (access_key == select_access_key) {
     result = true;
   }
 
