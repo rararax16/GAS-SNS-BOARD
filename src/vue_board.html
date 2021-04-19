@@ -580,7 +580,11 @@
        ***************************************************/
       , open_get_sns(json) {
         //開始行、投稿一覧を取得
-        this.nextRow = json.nextRow;
+        if (json.nextRow > 0) {
+          this.nextRow = json.nextRow - 1;
+        }else{
+          this.nextRow = json.nextRow;
+        }
         this.search_word_after = this.search_word;
 
         //画面に投稿内容がある場合、既存の配列データの後ろに追加する。
