@@ -2,14 +2,21 @@
   "timeZone": "Asia/Tokyo",
   "dependencies": {
     "enabledAdvancedServices": [{
-      "userSymbol": "Drive",
-      "serviceId": "drive",
-      "version": "v2"
+      "userSymbol": "People",
+      "serviceId": "peopleapi",
+      "version": "v1"
     }]
   },
   "webapp": {
     "access": "DOMAIN",
     "executeAs": "USER_ACCESSING"
   },
-  "exceptionLogging": "STACKDRIVER"
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+  ]
 }
