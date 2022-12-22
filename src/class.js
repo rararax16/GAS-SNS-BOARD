@@ -123,8 +123,6 @@ class SnsBoard {
   addData(param) {
     let imageUrl = '';
 
-    console.log(param);
-
     if (param.inputFile.name != null && param.inputFile.name != '') {
       let folderId = String(UPLOAD_FOLDER_URL).replace('/folders/', '$');
       folderId = folderId.substring(folderId.indexOf('$') + 1, folderId.length);

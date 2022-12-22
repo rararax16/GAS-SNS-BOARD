@@ -2,18 +2,12 @@ function doGet() {
   return HtmlService.createTemplateFromFile('index.html').evaluate();
 }
 
-function include(filename, ) {
-  const template = HtmlService.createTemplateFromFile(filename);
-  return template.evaluate().getContent();
-}
-
 function getSnsData(keyWord, startRow) {
 
   const snsBoard = new SnsBoard();
 
   const data = snsBoard.getDataByKeyWord(keyWord, startRow);
 
-  console.log(data);
   return data;
 }
 

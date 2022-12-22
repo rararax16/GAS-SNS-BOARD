@@ -368,7 +368,6 @@
     },
     methods: {
       gotoContent(content) {
-        console.log("gotoContent")
         this.selectedContents = content;
         this.reloadReply(content.id);
         this.isContentDialog = true;
@@ -408,7 +407,6 @@
           .withSuccessHandler(res => {
             this.nextRow = res.nextRow;
             this.nextSearch = keyWord;
-            console.log(res.data);
             this.postsContents = res.data;
 
             this.stopLoading();
@@ -466,7 +464,6 @@
 
         google.script.run
           .withSuccessHandler(res => {
-            console.log(res);
             this.isReloadhButtonDisable = false;
             this.isNextReplyButtonDisabled = false;
 
@@ -494,7 +491,6 @@
 
       //postPopup
       async newSnsPostData() {
-        console.log("newSnsPostData")
         const { valid } = await this.$refs.form.validate()
         if (valid === false) {
           this.snackbarMessage = "必須項目を入力してください";
