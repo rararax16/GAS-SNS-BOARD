@@ -35,7 +35,7 @@ class SnsBoard {
       if (snsData[1] != '' && snsData[1] != null) return;
 
       const timestampBase = new Date(snsData[3]);
-      const timestamp = `${timestampBase.getFullYear()}/${timestampBase.getMonth() + 1}/${timestampBase.getDate()}(${timestampBase.getHours()}:${timestampBase.getMinutes()})`
+      const timestamp = `${timestampBase.getFullYear()}/${timestampBase.getMonth() + 1}/${timestampBase.getDate()}(${('0' + timestampBase.getHours()).slice(-2)}:${('0' + timestampBase.getMinutes()).slice(-2)})`
 
       const result = {
         id: snsData[0],
@@ -99,7 +99,8 @@ class SnsBoard {
 
   getCommentDataById(id, startRow) {
     const user = new User();
-    const snsDataList = this.sheet.getDataRange().getValues().reverse();
+    const snsDataList = this.getAllData();
+    snsDataList.reverse();
 
     let resultList = [];
 
@@ -108,7 +109,7 @@ class SnsBoard {
       if(snsData[1] != id) return;
 
       const timestampBase = new Date(snsData[3]);
-      const timestamp = `${timestampBase.getFullYear()}/${timestampBase.getMonth() + 1}/${timestampBase.getDate()}(${timestampBase.getHours()}:${timestampBase.getMinutes()})`
+      const timestamp = `${timestampBase.getFullYear()}/${timestampBase.getMonth() + 1}/${timestampBase.getDate()}(${('0' + timestampBase.getHours()).slice(-2)}:${('0' + timestampBase.getMinutes()).slice(-2)})`
 
       const result = {
         id: snsData[0],
@@ -120,7 +121,7 @@ class SnsBoard {
         message: snsData[8],
         linkUrl: snsData[9],
         fileUrl: snsData[10],
-        viewer: snsData[11],
+        viewer: snsData[11].replaceAll(',', ' / '),
         isOwner: user.emailAddress == snsData[4] ? true : false
       }
       resultList.push(result);
@@ -183,7 +184,7 @@ class SnsBoard {
   }
 
   updateData(param) {
-    const dataList = this.sheet.getDataRange().getValues();
+    const dataList = this.getAllData();
 
     const updateTargetIndex = dataList.findIndex(data => data[0] == param.id);
 

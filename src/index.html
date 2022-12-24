@@ -8,6 +8,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.0.5/dist/vuetify.min.css">
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
   <style>
+    [v-cloak] {
+      display: none;
+    }
+
     .snsScroll {
       height: 60vh;
       overflow: auto;
@@ -23,7 +27,7 @@
 </head>
 
 <body>
-  <div id="app">
+  <div id="app" v-cloak>
     <v-app>
       <v-app-bar color="primary" title="SNS Board -GAS-"></v-app-bar>
       <v-main>
@@ -276,8 +280,17 @@
       <!-- postPopup -->
 
       <!-- snackbar -->
-      <v-snackbar v-model="isSnackbarOpen" :timeout="8000" :color="snackbarColor">
+      <v-snackbar v-model="isSnackbarOpen" :timeout="5000" :color="snackbarColor">
         {{ snackbarMessage }}
+        <template v-slot:actions>
+          <v-btn
+            color="white"
+            variant="text"
+            @click="isSnackbarOpen = false"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </template>
       </v-snackbar>
       <!-- snackbar -->
 
@@ -448,33 +461,33 @@
       //detailPopup
       newReplyPostData() {
 
-        const message = this.replayMessage
-          .replaceAll(" ", "")
-          .replaceAll("　", "")
+const message = this.replayMessage
+  .replaceAll(" ", "")
+  .replaceAll("　", "")
 
-        if (message.length <= 0) return;
+if (message.length <= 0) return;
 
-        const param = {
-          pearentId: this.selectedContents.id,
-          inputTitle: "",
-          inputMessage: this.replayMessage,
-          inputUrl: "",
-          inputFile: {}
-        }
+const param = {
+  pearentId: this.selectedContents.id,
+  inputTitle: "",
+  inputMessage: this.replayMessage,
+  inputUrl: "",
+  inputFile: {}
+}
 
-        this.isReplyButtonDisable = true;
+this.isReplyButtonDisable = true;
 
-        google.script.run
-          .withSuccessHandler(res => {
-            this.isReplyButtonDisable = false;
-            this.replayMessage = "";
-            this.reloadReply(this.selectedContents.id);
-          })
-          .withFailureHandler((error) => {
-            this.error(error);
-          })
-          .newPostSns(param);
-      },
+google.script.run
+  .withSuccessHandler(res => {
+    this.isReplyButtonDisable = false;
+    this.replayMessage = "";
+    this.reloadReply(this.selectedContents.id);
+  })
+  .withFailureHandler((error) => {
+    this.error(error);
+  })
+  .newPostSns(param);
+},
 
       reloadReply(id) {
         this.isReloadhButtonDisable = true;
