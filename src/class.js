@@ -1,10 +1,30 @@
 class SnsBoard {
   constructor() {
-    this.sheet = SpreadsheetApp.openByUrl(SNS_BOARD_URL).getSheetByName('data');
+    this.sheet = SpreadsheetApp.openByUrl(SNS_BOARD_URL).getSheetByName(SNS_BOARD_SHEET_NAME);
+  }
+
+  getAllData(){
+    const snsDataList = this.sheet.getDataRange().getValues();
+    return snsDataList;
+  }
+
+  clearAllData(){
+    const snsDataList = this.getAllData();
+    const header = snsDataList[0];
+    this.sheet.clear();
+    this.sheet.getRange(1, 1, 1, header.length).setValues([header])
+  }
+
+  addDataList(dataList){
+    if(dataList.length == 0) return;
+    this.sheet.getRange(2, 1, dataList.length, dataList[0].length).setValues(dataList);
   }
 
   getDataByKeyWord(keyWord, startRow) {
-    const snsDataList = this.sheet.getDataRange().getValues().reverse();
+
+    const snsDataList = this.getAllData();
+    snsDataList.shift();
+    snsDataList.reverse();
 
     let resultSnsDataList = [];
 
@@ -167,7 +187,7 @@ class SnsBoard {
 
     const updateTargetIndex = dataList.findIndex(data => data[0] == param.id);
 
-    if (updateTargetIndex < 0) throw new Error('no data');
+    if (updateTargetIndex < 0) throw new Error('投稿データがありません');
 
     const updateData = dataList[updateTargetIndex];
 

@@ -276,13 +276,13 @@
       <!-- postPopup -->
 
       <!-- snackbar -->
-      <v-snackbar v-model="isSnackbarOpen" :timeout="3000" :color="snackbarColor">
+      <v-snackbar v-model="isSnackbarOpen" :timeout="8000" :color="snackbarColor">
         {{ snackbarMessage }}
       </v-snackbar>
       <!-- snackbar -->
 
       <!-- confirmDialog -->
-      <v-dialog v-model="confirmDialog" persistent>
+      <v-dialog v-model="confirmDialog" persistent width="300">
         <v-card>
           <v-card-text>
             <v-row>
@@ -367,6 +367,12 @@
       }
     },
     methods: {
+      error(error) {
+        console.error(error);
+        this.snackbarMessage = error+"：再読み込みをしてください";
+        this.snackbarColor = "error";
+        this.isSnackbarOpen = true;
+      },
       gotoContent(content) {
         this.selectedContents = content;
         this.reloadReply(content.id);
@@ -378,6 +384,9 @@
         if (content.isOwner === false) {
           google.script.run
             .withSuccessHandler(() => { })
+            .withFailureHandler((error) => {
+              this.error(error);
+            })
             .updateData({
               id: content.id,
               isViewer: true,
@@ -412,6 +421,9 @@
             this.stopLoading();
 
           })
+          .withFailureHandler((error) => {
+            this.error(error);
+          })
           .getSnsData(keyWord, 0);
       },
 
@@ -426,6 +438,9 @@
 
             this.stopLoading();
 
+          })
+          .withFailureHandler((error) => {
+            this.error(error);
           })
           .getSnsData(keyWord, row);
       },
@@ -455,6 +470,9 @@
             this.replayMessage = "";
             this.reloadReply(this.selectedContents.id);
           })
+          .withFailureHandler((error) => {
+            this.error(error);
+          })
           .newPostSns(param);
       },
 
@@ -469,6 +487,9 @@
 
             this.nextReplyRow = res.nextRow;
             this.selectedContents.replay = res.data;
+          })
+          .withFailureHandler((error) => {
+            this.error(error);
           })
           .getReplayData(id, 0);
       },
@@ -485,6 +506,9 @@
             this.nextReplyRow = res.nextRow;
             this.selectedContents.replay = [...this.selectedContents.replay, ...res.data];
             // this.selectedContents.replay = res.data;
+          })
+          .withFailureHandler((error) => {
+            this.error(error);
           })
           .getReplayData(id, startRow);
       },
@@ -511,6 +535,9 @@
             this.closePostDialog();
 
             this.getSnsData(this.search);
+          })
+          .withFailureHandler((error) => {
+            this.error(error);
           })
           .newPostSns(formParam);
       },
@@ -556,6 +583,9 @@
 
             this.closeConfirmDialog();
 
+          })
+          .withFailureHandler((error) => {
+            this.error(error);
           })
           .updateData({
             id: this.deleteExpectationId,
